@@ -1,6 +1,39 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/userModel");
+const jwt = require("jsonwebtoken");
+const authenticateToken = require("../config/auth"); 
+
+//Login Endpoint:
+router.post("/login", async (req, res) => {
+  try {
+    const { username, passwd } = req.body;
+
+    // Check if both fields are provided in the payload
+    if (!username || !passwd) {
+      return res.status(400).json({ success: false, error: "Username and password are required." });
+    }
+
+    // Query database via our User model to check credentials
+    const user = await User.findByCredentials(username, passwd);
+
+    // If no user found matching username and password, deny entry
+    if (!user) {
+      return res.status(401).json({ success: false, error: "Invalid username or password." });
+    }
+
+    // Generate JWT payload containing non-sensitive user identity details
+    const payload = { id: user.userID, username: user.username, role: user.urole };
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1h" });
+
+    res.status(200).json({ success: true, token: token });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.use(authenticateToken);
+
 
 // Endpoint: GET /api/users - Find all users (READ)
 router.get("/", async function (req, res) {

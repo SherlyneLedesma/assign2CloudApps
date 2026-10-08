@@ -37,6 +37,14 @@ const User = {
     const [result] = await db.execute(sql, [id]);
     return result.affectedRows > 0;
   },
+
+  // Find user by credentials for JWT Login
+  async findByCredentials(username, passwd) {
+    const sql = `SELECT userID, username, urole FROM users WHERE username = ? AND passwd = ?`;
+    const [rows] = await db.execute(sql, [username, passwd]);
+    return rows[0] || null;
+  }
+
 };
 
 module.exports = User;
